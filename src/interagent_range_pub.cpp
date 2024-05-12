@@ -32,12 +32,16 @@ class InterAgentRangePublisher : public rclcpp::Node
     InterAgentRangePublisher()
     : Node("interagent_meas_publisher")
     {
-      this->declare_parameter("px4_ns", "px4_1");
+      this->declare_parameter("px4_ns", "px4");
+      this->declare_parameter("cf_ns", "cf");
       this->declare_parameter("gz_world_name", "AbuDhabi");
       this->declare_parameter("gz_model_names", std::vector<std::string>{"x500_1"});
+      this->declare_parameter("ros_ns", std::vector<std::string>{"px4_1"});
+
       std::string _px4_ns = this->get_parameter("px4_ns").as_string();
       std::string _world_name = this->get_parameter("gz_world_name").as_string();
       std::vector<std::string> _model_names = this->get_parameter("gz_model_names").as_string_array();
+      std::vector<std::string> _ros_ns = this->get_parameter("ros_ns").as_string_array();
 
       RCLCPP_INFO(this->get_logger(),"World Name: %s", _world_name.c_str());
       for (u_int16_t i=0; i < _model_names.size(); i++)
@@ -53,6 +57,8 @@ class InterAgentRangePublisher : public rclcpp::Node
     void poseInfoCallback(const gz::msgs::Pose_V &_pose)
     {   
         std::vector<std::string>  _model_names = this->get_parameter("gz_model_names").as_string_array();
+        std::vector<std::string>  _ros_ns = this->get_parameter("ros_ns").as_string_array();
+
         // Getting the position of each model entity 
         std::vector<gz::math::Vector3d> _model_positions_enu;
         for (u_int16_t i=0; i < _model_names.size(); i++)
@@ -73,7 +79,7 @@ class InterAgentRangePublisher : public rclcpp::Node
         {
           if (_pub_dist_map.find(_model_names[i]) == _pub_dist_map.end())
           {
-              _pub_dist_map[_model_names[i]] = this->create_publisher<std_msgs::msg::Float32MultiArray>(std::string{_model_names[i]}+"/detector/measurements", 10);
+            _pub_dist_map[_model_names[i]] = this->create_publisher<std_msgs::msg::Float32MultiArray>(std::string{_ros_ns[i]}+"/detector/interagent_distances", 10);
           }
 
           std_msgs::msg::Float32MultiArray distances;

@@ -47,6 +47,7 @@ class InterAgentRangePublisher : public rclcpp::Node
       for (u_int16_t i=0; i < _model_names.size(); i++)
       {
         RCLCPP_INFO(this->get_logger(),"Model Name: %s \n", _model_names[i].c_str());
+        RCLCPP_INFO(this->get_logger(),"ROS Namespace: %s \n", _ros_ns[i].c_str());
       }
       std::string _world_pose_topic = "/world/" + _world_name + "/pose/info";
       if (!_node.Subscribe(_world_pose_topic, &InterAgentRangePublisher::poseInfoCallback, this)) {

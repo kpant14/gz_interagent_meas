@@ -14,7 +14,7 @@ def generate_launch_description():
     )
     gz_model_names_arg = DeclareLaunchArgument(
         'gz_model_names',
-        default_value="[x500_1, x500_2, cf1, cf2, cf3]"
+        default_value="[x500g_1, x500g_2, cf_1, cf_2, cf_3]"
     )
     ros_ns_arg = DeclareLaunchArgument(
         'ros_ns',

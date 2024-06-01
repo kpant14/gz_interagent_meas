@@ -60,6 +60,7 @@ class InterAgentRangePublisher : public rclcpp::Node
         std::vector<std::string>  _model_names = this->get_parameter("gz_model_names").as_string_array();
         std::vector<std::string>  _ros_ns = this->get_parameter("ros_ns").as_string_array();
 
+        size_t _num_models = _model_names.size();
         // Getting the position of each model entity 
         std::vector<gz::math::Vector3d> _model_positions_enu;
         for (u_int16_t i=0; i < _model_names.size(); i++)
@@ -82,14 +83,16 @@ class InterAgentRangePublisher : public rclcpp::Node
           {
             _pub_dist_map[_model_names[i]] = this->create_publisher<std_msgs::msg::Float32MultiArray>(std::string{_ros_ns[i]}+"/detector/interagent_distances", 10);
           }
-
-          std_msgs::msg::Float32MultiArray distances;
-          for (u_int16_t j=0; j < _model_names.size(); j++)
+          if (_model_positions_enu.size()==_num_models)
           {
-            double distance = _model_positions_enu[i].Distance(_model_positions_enu[j]);
-            distances.data.push_back(distance);
+            std_msgs::msg::Float32MultiArray distances;
+            for (u_int16_t j=0; j < _model_names.size(); j++)
+            {
+              double distance = _model_positions_enu[i].Distance(_model_positions_enu[j]);
+              distances.data.push_back(distance);
+            }
+            _pub_dist_map[_model_names[i]]->publish(distances);
           }
-          _pub_dist_map[_model_names[i]]->publish(distances);
         }
     }
     gz::transport::Node _node;

@@ -53,10 +53,16 @@ class InterAgentRangePublisher : public rclcpp::Node
       if (!_node.Subscribe(_world_pose_topic, &InterAgentRangePublisher::poseInfoCallback, this)) {
             RCLCPP_ERROR(this->get_logger(),"failed to subscribe to %s", _world_pose_topic.c_str());
       }
+      timer_ = this->create_wall_timer(
+      300ms, std::bind(&InterAgentRangePublisher::timer_callback, this));
     }
   private:
     void poseInfoCallback(const gz::msgs::Pose_V &_pose)
     {   
+      _pose_msg = _pose;
+    }
+    void timer_callback()
+    {
         std::vector<std::string>  _model_names = this->get_parameter("gz_model_names").as_string_array();
         std::vector<std::string>  _ros_ns = this->get_parameter("ros_ns").as_string_array();
 
@@ -66,17 +72,17 @@ class InterAgentRangePublisher : public rclcpp::Node
         for (u_int16_t i=0; i < _model_names.size(); i++)
         {
           gz::math::Vector3d _position_enu;
-          for (int p = 0; p < _pose.pose_size(); p++) {
-            if (_pose.pose(p).name() == _model_names[i]) {
-              _position_enu.X(_pose.pose(p).position().x());
-              _position_enu.Y(_pose.pose(p).position().y());
-              _position_enu.Z(_pose.pose(p).position().z());
+          for (int p = 0; p < _pose_msg.pose_size(); p++) {
+            if (_pose_msg.pose(p).name() == _model_names[i]) {
+              _position_enu.X(_pose_msg.pose(p).position().x());
+              _position_enu.Y(_pose_msg.pose(p).position().y());
+              _position_enu.Z(_pose_msg.pose(p).position().z());
               _model_positions_enu.push_back(_position_enu);
               break;
             }
           }
         }
-        // Calculating distance from position of each model entity 
+       // Calculating distance from position of each model entity 
         for (u_int16_t i=0; i < _model_names.size(); i++)
         {
           if (_pub_dist_map.find(_model_names[i]) == _pub_dist_map.end())
@@ -95,8 +101,10 @@ class InterAgentRangePublisher : public rclcpp::Node
           }
         }
     }
+    gz::msgs::Pose_V _pose_msg;
     gz::transport::Node _node;
     typedef rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr _dist_pub_ptr;
+    rclcpp::TimerBase::SharedPtr timer_;
     std::map<std::string, _dist_pub_ptr> _pub_dist_map{};
 };
 
